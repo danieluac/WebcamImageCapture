@@ -34,15 +34,50 @@ namespace CameraCapture
 
         private void Form1_Load(object sender, EventArgs e)
         {          
+            
+            
+        }
+
+        private void btnCapture_Click(object sender, EventArgs e)
+        {
+
+            SaveImageToDB(pictureBox1.Image);
+            webCam.Stop();
+            ImageShow();
+
+        }
+        public void  SaveImageToDB(Image img)
+        {
             try
             {
+                connection.Open();
+                string QueryString = $"INSERT INTO photos (titlte, photo) VALUES (@title, @photo)";
+                SqlCommand command = new SqlCommand(QueryString, connection);
+                command.Parameters.Clear();
+                command.Parameters.AddWithValue("@title", "Capture photografer");
+                MemoryStream stream = new MemoryStream();
+                img.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
+                byte[] pic = stream.ToArray();
 
+                command.Parameters.AddWithValue("@photo", pic);
+
+                command.ExecuteNonQuery();
+                connection.Close();
+            }
+            catch (SqlException exception1)
+            {               
+                MessageBox.Show("data not saved");
+            }
+        }
+        public void ImageShow()
+        {
+            try
+            {
                 connection.Open();
                 SqlCommand cmd = new SqlCommand($"Select photo from photos order by id desc", connection);
                 byte[] image = (byte[])cmd.ExecuteScalar();
                 if (image != null)
                 {
-
                     MemoryStream ms = new MemoryStream(image);
                     pictureBox2.Image = Image.FromStream(ms);
                 }
@@ -51,52 +86,14 @@ namespace CameraCapture
             }
             catch (SqlException exception1)
             {
-                SqlException ex = exception1;
-                SqlException exception = ex;
-                string caption = "Ocorreu o seguinte erro: " + exception.Number.ToString();
-                MessageBox.Show(exception.Message, caption);
+                MessageBox.Show("no row affected...");
             }
-            
-        }
-
-        private void btnCapture_Click(object sender, EventArgs e)
-        {
-           
-            pictureBox2.Image = pictureBox1.Image;
-            webCam.Stop();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
 
-            try
-            {
-
-                connection.Open();
-                string QueryString = $"INSERT INTO photos (titlte, photo) VALUES (@title, @photo)";
-                SqlCommand command = new SqlCommand(QueryString, connection);
-
-                command.Parameters.Clear();
-                command.Parameters.AddWithValue("@title", "Capture photografer");
-
-                MemoryStream stream = new MemoryStream();
-                pictureBox2.Image.Save(stream, System.Drawing.Imaging.ImageFormat.Jpeg);
-                byte[] pic = stream.ToArray();
-
-                command.Parameters.AddWithValue("@photo", pic);
-                
-                command.ExecuteNonQuery();
-                connection.Close();
-
-                MessageBox.Show("data saved");
-            }
-            catch (SqlException exception1)
-            {
-                SqlException ex = exception1;
-                SqlException exception = ex;
-                string caption = "Ocorreu o seguinte erro: " + exception.Number.ToString();
-                MessageBox.Show(exception.Message, caption);
-            }
+           
         }
     }
 }
